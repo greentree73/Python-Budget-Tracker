@@ -44,8 +44,33 @@ class TransactionService:
             # transaction = Transaction(...)
             # return transaction.save()
             
-            pass  # Remove when implemented
-            
+            # 1. Validate amount
+            amount = validate_amount(amount)
+
+            # 2. Validate date
+            transaction_date = validate_date(transaction_date)
+
+            # 3. Validate type
+            transaction_type = transaction_type.strip().lower()
+            if transaction_type not in ["income", "expense"]:
+                raise ValueError("Transaction type must be 'income' or 'expense'")
+
+            # 4. Validate description
+            if not description.strip():
+                raise ValueError("Description cannot be empty")
+
+            # 5. Create transaction object
+            transaction = Transaction(
+            amount=amount,
+            description=description.strip(),
+            transaction_date=transaction_date,
+            category=category_id,
+            type=transaction_type
+            )
+
+            # 6. Save transaction
+            return transaction.save()
+           
         except Exception as e:
             print(f"❌ Error adding transaction: {e}")
             return False
@@ -72,7 +97,35 @@ class TransactionService:
         # 3. Validate updated data
         # 4. Save changes
         
-        pass
+        try:
+            # 1. Get existing transaction
+            transaction = Transaction.get_by_id(transaction_id)
+
+            if not transaction:
+                raise ValueError("Transaction not found")
+
+            # 2. Update fields if provided
+
+            if amount is not None:
+                transaction.amount = validate_amount(amount)
+
+            if description is not None:
+                if not description.strip():
+                    raise ValueError("Description cannot be empty")
+                transaction.description = description.strip()
+
+            if transaction_date is not None:
+                transaction.transaction_date = validate_date(transaction_date)
+
+            if category_id is not None:
+                transaction.category = category_id
+
+            # 3. Save changes
+            return transaction.save()
+
+        except Exception as e:
+            print(f"❌ Error updating transaction: {e}")
+            return False
     
     @staticmethod
     def delete_transaction(transaction_id):
@@ -85,13 +138,23 @@ class TransactionService:
         Returns:
             bool: True if successful, False otherwise
         """
-        # TODO: Implement transaction deletion
-        # 1. Get transaction by ID
-        # 2. Confirm deletion with user
-        # 3. Delete if confirmed
         
-        pass
-    
+        try: 
+            # 1. Get transaction by ID
+            transaction = Transaction.get_by_id(transaction_id)
+       
+            if not transaction:
+                print("❌ Transaction not found")
+                return False
+        
+            # 2. Delete transaction
+            return transaction.delete()
+
+        except Exception as e:
+            print(f"❌ Error deleting transaction: {e}")
+            return False
+        
+        
     @staticmethod
     def get_transactions(limit=None, transaction_type=None, category_id=None,
                         start_date=None, end_date=None):
@@ -112,6 +175,10 @@ class TransactionService:
         # Use appropriate Transaction class methods based on filters
         
         pass
+
+    @staticmethod
+    def get_transaction_by_id(transaction_id):
+        return Transaction.get_by_id(transaction_id)
     
     @staticmethod
     def search_transactions(search_term):

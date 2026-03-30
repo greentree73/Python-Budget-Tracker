@@ -29,7 +29,7 @@ class ReportService:
         print("📊 Generating Balance Report...")
         
         # TODO: Get transaction summary
-        # summary = TransactionService.get_transaction_summary()
+        summary = TransactionService.get_transaction_summary()
         
         report = []
         report.append("\n" + "=" * 50)
@@ -39,6 +39,11 @@ class ReportService:
         # TODO: Add balance information to report
         # Format currency amounts nicely
         # Show income, expenses, and net balance
+
+        report.append(f"Total Income: {format_currency(summary['total_income'])}")
+        report.append(f"Total Expenses: {format_currency(summary['total_expenses'])}")
+        report.append(f"Net Balance: {format_currency(summary['net_balance'])}")
+        report.append(f"Total Transactions: {summary['transaction_count']}")
         
         report.append("\nGenerated: " + format_date(date.today()))
         report.append("=" * 50)
@@ -65,11 +70,27 @@ class ReportService:
         report.append("=" * 50)
         
         # TODO: Get category spending data
-        # category_data = TransactionService.get_spending_by_category(transaction_type)
+        category_data = TransactionService.get_spending_by_category(transaction_type)
         
         # TODO: Sort categories by amount (highest first)
         # Show top N categories with percentages
         
+        if not category_data:
+            report.append("No data available.")
+        else:
+            # Sort categories by amount (descending)
+            sorted_categories = sorted(category_data.items(), key=lambda x: x[1], reverse=True)
+
+        total = sum(category_data.values())
+
+
+        report.append(f"{'Category':<20}{'Amount':<15}{'Percentage'}")
+        report.append("-" * 50)
+
+        for category, amount in sorted_categories[:top_n]:
+            percentage = (amount / total * 100) if total > 0 else 0
+            report.append(f"{category:<20}{format_currency(amount):<15}{percentage:.2f}%")
+
         report.append("\nGenerated: " + format_date(date.today()))
         report.append("=" * 50)
         
@@ -105,7 +126,7 @@ class ReportService:
         report.append("=" * 50)
         
         # TODO: Get monthly data
-        # monthly_data = TransactionService.get_monthly_summary(year, month)
+        monthly_data = TransactionService.get_monthly_summary(year, month)
         
         # TODO: Add monthly statistics
         # - Total income for month
@@ -114,7 +135,17 @@ class ReportService:
         # - Number of transactions
         # - Average transaction size
         # - Top spending categories
-        
+
+        report.append(f"Total Income: {format_currency(monthly_data.get('total_income', 0))}")
+        report.append(f"Total Expenses: {format_currency(monthly_data.get('total_expenses', 0))}")
+        report.append(f"Net Balance: {format_currency(monthly_data.get('net_balance', 0))}")
+        report.append(f"Transaction Count: {monthly_data.get('transaction_count', 0)}")
+
+        # average transaction
+        if monthly_data.get('transaction_count', 0) > 0:
+            avg = (monthly_data['total_income'] + monthly_data['total_expenses']) / monthly_data['transaction_count']
+            report.append(f"Average Transaction: {format_currency(avg)}")
+
         report.append("\nGenerated: " + format_date(date.today()))
         report.append("=" * 50)
         
@@ -144,17 +175,29 @@ class ReportService:
         report.append("")
         
         # TODO: Get transactions for date range
-        # Use Transaction.get_by_date_range()
+        transactions = Transaction.get_by_date_range(start_date, end_date)
         
         # TODO: Calculate trends
         # - Daily average spending
         # - Most active spending days
         # - Trend direction (spending increasing/decreasing)
+
+        if not transactions:
+            report.append("No transactions found.")
+        else:
+            total_spending = sum(t.amount for t in transactions if t.transaction_type == 'expense')
+            total_income = sum(t.amount for t in transactions if t.transaction_type == 'income')
+
+            daily_avg_spending = total_spending / days
+
+            report.append(f"Total Income: {format_currency(total_income)}")
+            report.append(f"Total Expenses: {format_currency(total_spending)}")
+            report.append(f"Daily Avg Spending: {format_currency(daily_avg_spending)}")
+
+            report.append("\nGenerated: " + format_date(date.today()))
+            report.append("=" * 50)
         
-        report.append("\nGenerated: " + format_date(date.today()))
-        report.append("=" * 50)
-        
-        return "\n".join(report)
+            return "\n".join(report)
     
     @staticmethod
     def generate_summary_dashboard():

@@ -5,8 +5,8 @@ A command-line interface for managing personal finances
 
 TODO: Complete the CLI interface and menu system
 
-Author: [Your Name Here]
-Date: [Date]
+Author: Vandana Arora
+Date: 3/28/2025
 """
 
 import os
@@ -66,7 +66,8 @@ class BudgetTracker:
         # TODO: Implement dashboard display
         # Use ReportService.generate_summary_dashboard()
         
-        pass  # Remove when implemented
+        summary = ReportService.generate_summary_dashboard()
+        print(summary)
     
     def show_main_menu(self):
         """
@@ -141,7 +142,60 @@ class BudgetTracker:
             
             # Use TransactionService.add_transaction() to save
             
-            pass  # Remove when implemented
+            # 1. Get transaction type
+            transaction_type = input("Transaction type (income/expense): ").strip().lower()
+
+            if transaction_type not in ["income", "expense"]:
+                print("❌ Invalid transaction type")
+                return
+
+            # 2. Get amount
+            try:
+                amount = float(input("Amount: "))
+            except ValueError:
+                print("Invalid number")
+
+            if amount <= 0:
+                print("❌ Amount must be greater than zero")
+                return
+
+            # 3. Get description
+            description = input("Description: ").strip()
+            if not description:
+                print("Description is required")
+                return
+
+            # 4. Show categories
+            print("\nAvailable Categories:")
+            print("1. Salary")
+            print("2. Freelance")
+            print("3. Investment")
+            print("4. Food")
+            print("5. Transportation")
+            print("6. Utilities")
+            print("7. Entertainment")
+            print("8. Healthcare")
+            print("9. Education")
+            print("10. Shopping")
+
+            category = int(input("Choose category ID: "))
+            if category < 1 or category > 10:
+                print("❌ Invalid category")
+                return
+
+            # 5. Get date
+            transaction_date = input("Date (YYYY-MM-DD): ").strip()
+
+            # 6. Save transaction
+            TransactionService.add_transaction(
+            amount,
+            description,
+            transaction_date,
+            category,
+            transaction_type
+             )
+
+            print("✅ Transaction added successfully")
             
         except Exception as e:
             print(f"❌ Error adding transaction: {e}")
@@ -158,8 +212,66 @@ class BudgetTracker:
         # 2. Get transactions using appropriate service method
         # 3. Display in formatted table
         # 4. Show pagination if many transactions
+
+        try:
+            print("Filter options:")
+            print("1. All transactions")
+            print("2. By type (income/expense)")
+            print("3. By category")
+            print("4. By date range")
+
+            choice = input("Choose filter option: ").strip()
+
+            transactions = []
+
+            # 1. All transactions
+            if choice == "1":
+                transactions = TransactionService.get_transactions()
+
+            # 2. By type
+            elif choice == "2":
+                t_type = input("Enter type (income/expense): ").strip().lower()
+                transactions = TransactionService.get_transactions(transaction_type=t_type)
+
+            # 3. By category
+            elif choice == "3":
+                try:
+                    category_id = int(input("Enter category ID: "))
+                except ValueError:
+                    print("❌ Invalid category ID")
+                    return
+
+                transactions = TransactionService.get_transactions(category_id=category_id)
+
+            # 4. By date range
+            elif choice == "4":
+                start_date = input("Start date (YYYY-MM-DD): ").strip()
+                end_date = input("End date (YYYY-MM-DD): ").strip()
+
+                transactions = TransactionService.get_transactions(
+                start_date=start_date,
+                end_date=end_date
+                )
+
+            else:
+                print("❌ Invalid option")
+                return
+
+             # Display results
+            if not transactions:
+                print("No transactions found.")
+                return
+
+            print("\nID | Type | Amount | Category | Date | Description")
+            print("-" * 60)
+
+            for t in transactions:
+                print(f"{t.id} | {t.type} | {t.amount} | {t.category} | {t.transaction_date} | {t.description}")
+
+        except Exception as e:
+            print(f"❌ Error viewing transactions: {e}")
         
-        pass  # Remove when implemented
+  
     
     def edit_transaction(self):
         """
@@ -174,8 +286,68 @@ class BudgetTracker:
         # 3. Load existing transaction
         # 4. Allow editing individual fields
         # 5. Save changes
+
+        try:
+            # 1. Show recent transactions
+            transactions = TransactionService.get_transactions(limit=10)
+
+            if not transactions:
+                print("No transactions available to edit.")
+                return
+
+            print("\nRecent Transactions:")
+            print("ID | Type | Amount | Category | Date | Description")
+            print("-" * 60)
+
+            for t in transactions:
+                print(f"{t.id} | {t.type} | {t.amount} | {t.category} | {t.transaction_date} | {t.description}")
+
+            # 2. Ask for transaction ID
+            try:
+                transaction_id = int(input("\nEnter Transaction ID to edit: "))
+            except ValueError:
+                print("❌ Invalid ID")
+                return
+
+            # 3. Load existing transaction
+            transaction = TransactionService.get_transaction_by_id(transaction_id)
+
+            if not transaction:
+                print("❌ Transaction not found")
+                return
+
+            print("\nLeave field empty to keep current value.")
+
+            # 4. Edit fields
+            new_amount = input(f"Amount ({transaction.amount}): ").strip()
+            new_description = input(f"Description ({transaction.description}): ").strip()
+            new_date = input(f"Date ({transaction.transaction_date}): ").strip()
+            new_category = input(f"Category ID ({transaction.category}): ").strip()
+
+            # 5. Prepare values (only update if provided)
+            updated_amount = new_amount if new_amount else None
+            updated_description = new_description if new_description else None
+            updated_date = new_date if new_date else None
+            updated_category = int(new_category) if new_category else None
+
+            # 6. Call service layer
+            success = TransactionService.update_transaction(
+                transaction_id,
+                amount=updated_amount,
+                description=updated_description,
+                transaction_date=updated_date,
+                category_id=updated_category
+            )
+
+            if success:
+                print("✅ Transaction updated successfully")
+            else:
+                print("❌ Failed to update transaction")
+
+        except Exception as e:
+            print(f"❌ Error editing transaction: {e}")
         
-        pass  # Remove when implemented
+            
     
     def delete_transaction(self):
         """
@@ -190,7 +362,53 @@ class BudgetTracker:
         # 3. Confirm deletion
         # 4. Delete using service
         
-        pass  # Remove when implemented
+        try:
+            # 1. Show recent transactions
+            transactions = TransactionService.get_transactions(limit=10)
+
+            if not transactions:
+                print("No transactions available to delete.")
+                return
+
+            print("\nRecent Transactions:")
+            print("ID | Type | Amount | Category | Date | Description")
+            print("-" * 60)
+
+            for t in transactions:
+                print(f"{t.id} | {t.type} | {t.amount} | {t.category} | {t.transaction_date} | {t.description}")
+
+            # 2. Ask for transaction ID
+            try:
+                transaction_id = int(input("\nEnter Transaction ID to delete: "))
+            except ValueError:
+                print("❌ Invalid ID")
+                return
+
+            # 3. Load existing transaction
+            transaction = TransactionService.get_transaction_by_id(transaction_id)
+
+            if not transaction:
+                print("❌ Transaction not found")
+                return
+            
+            # 4. Confirm deletion
+            confirm = input("Are you sure you want to delete this transaction? (y/n): ").strip().lower()
+
+            if confirm != "y":
+                print("Deletion cancelled.")
+                return
+
+            # 5. Call service layer
+            success = TransactionService.delete_transaction(transaction_id)
+
+            if success:
+                print("✅ Transaction deleted successfully")
+            else:
+                print("❌ Failed to delete transaction")
+
+        except Exception as e:
+            print(f"❌ Error deleting transaction: {e}")
+
     
     def generate_reports(self):
         """
@@ -341,8 +559,8 @@ def main():
             return
         
         # Create and start the application
-        app = BudgetTracker()
-        app.start()
+                  
+        app.start()                        
         
     except KeyboardInterrupt:
         print("\n\n👋 Application terminated by user.")

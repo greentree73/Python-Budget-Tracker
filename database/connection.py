@@ -7,8 +7,8 @@ TODO: Complete the database connection and query functions
 """
 
 import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import psycopg
+from psycopg.rows import dict_row
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -27,11 +27,11 @@ class DatabaseConnection:
         # Hint: Use os.getenv() to get environment variables
         # You'll need: DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
         
-        self.host = None  # TODO: Get from environment
-        self.database = None  # TODO: Get from environment  
-        self.user = None  # TODO: Get from environment
-        self.password = None  # TODO: Get from environment
-        self.port = None  # TODO: Get from environment (default: 5432)
+        self.host = os.getenv("DB_HOST", "localhost")  # TODO: Get from environment
+        self.database = os.getenv("DB_NAME", "budget_tracker")  # TODO: Get from environment  
+        self.user = os.getenv("DB_USER", "postgres")  # TODO: Get from environment
+        self.password = os.getenv("DB_PASSWORD", "root")  # TODO: Get from environment
+        self.port = os.getenv("DB_PORT", 5432)  # TODO: Get from environment (default: 5432)
         
         self.connection = None
     
@@ -43,24 +43,32 @@ class DatabaseConnection:
             bool: True if connection successful, False otherwise
         """
         try:
-            # TODO: Create database connection using psycopg2.connect()
+            # TODO: Create database connection using psycopg.connect()
             # Use the connection parameters from __init__
             # Set cursor_factory=RealDictCursor for dictionary-like results
-            
-            pass  # Remove this when you implement the function
-            
+            self.connection = psycopg.connect(
+                host=self.host,
+                database=self.database,
+                user=self.user,
+                password=self.password,
+                port=self.port,
+                row_factory=dict_row
+            )
+            print("�� Database connection established successfully")
+            return True
         except Exception as e:
-            print(f"❌ Database connection failed: {e}")
+            print(f"�� Database connection failed: {e}")
             return False
-    
+         
     def disconnect(self):
         """
         Close the database connection
         """
         # TODO: Close the connection if it exists
         # Check if self.connection exists and close it
-        
-        pass  # Remove this when you implement
+        if self.connection:
+            self.connection.close()
+            print("�� Database connection closed successfully")
     
     def execute_query(self, query, params=None):
         """
@@ -79,9 +87,14 @@ class DatabaseConnection:
             # 2. Execute query with optional parameters
             # 3. Fetch and return results
             # 4. Close cursor
+         
+            with self.connection.cursor() as cursor:
+                cursor.execute(query, params or ())
             
-            pass  # Remove this when you implement
-            
+                # If SELECT query → fetch results
+                if cursor.description:
+                    return cursor.fetchall()
+                            
         except Exception as e:
             print(f"❌ Query execution failed: {e}")
             return []
@@ -104,12 +117,16 @@ class DatabaseConnection:
             # 3. Commit the transaction
             # 4. Close cursor
             # 5. Return True if successful
-            
-            pass  # Remove this when you implement
+             
+            with self.connection.cursor() as cursor:
+                cursor.execute(query, params)
+                self.connection.commit()
+                return True
             
         except Exception as e:
             print(f"❌ Update query failed: {e}")
             # TODO: Rollback the transaction on error
+            self.connection.rollback()
             return False
     
     def test_connection(self):
