@@ -45,19 +45,30 @@ class Category:
             if self.id:
                 # TODO: UPDATE existing category
                 query = """
-                -- TODO: Write UPDATE query
-                -- UPDATE categories SET name = %s, type = %s, description = %s WHERE id = %s
+                UPDATE categories SET name = %s, type = %s, description = %s WHERE id = %s
                 """
                 # Use self.db.execute_update() with parameters
-                pass
+                self.db.execute_update(query, (
+                self.name,
+                self.type,
+                self.description,
+                self.id
+            ))
             else:
                 # TODO: INSERT new category
                 query = """
-                -- TODO: Write INSERT query with RETURNING id
-                -- INSERT INTO categories (name, type, description) VALUES (%s, %s, %s) RETURNING id
+                INSERT INTO categories (name, type, description) VALUES (%s, %s, %s) RETURNING id
                 """
                 # Use self.db.execute_query() to get the new ID
-                pass
+                
+                result = self.db.execute_query(query, (
+                self.name,
+                self.type,
+                self.description
+            ))
+
+            if result:
+                self.id = result[0][0]
                 
         except Exception as e:
             print(f"❌ Error saving category: {e}")
@@ -80,7 +91,19 @@ class Category:
         # - type is 'income' or 'expense'
         # - name length is reasonable (< 50 characters)
         
-        pass
+        if not self.name or not self.name.strip():
+            print("❌ Category name cannot be empty")
+            return False
+
+        if len(self.name) > 50:
+            print("❌ Category name too long (max 50 characters)")
+            return False
+
+        if self.type not in ("income", "expense"):
+            print("❌ Category type must be 'income' or 'expense'")
+            return False
+
+        return True
     
     @staticmethod
     def get_all():
@@ -95,17 +118,25 @@ class Category:
         
         # TODO: Write SQL query to get all categories
         query = """
-        -- TODO: SELECT all categories ordered by type, then name
-        -- SELECT id, name, type, description FROM categories ORDER BY type, name
+        SELECT id, name, type, description FROM categories ORDER BY type, name
         """
-        
-        results = db.execute_query(query)
+        results = db.execute_query((query), )
         db.disconnect()
         
         categories = []
         # TODO: Convert results to Category objects
         # Loop through results and create Category instances
         
+        for row in results:
+            categories.append(
+                Category(
+                    name=row["name"],
+                    category_type=row["type"],
+                    description=row["description"],
+                    category_id=row["id"]
+                )
+            )
+
         return categories
     
     @staticmethod
@@ -119,11 +150,35 @@ class Category:
         Returns:
             list: List of Category objects
         """
+
+        db = DatabaseConnection()
+        db.connect()
+
         # TODO: Implement type filtering
         # Similar to get_all() but with WHERE type = %s
         
-        pass
-    
+        query = """
+        SELECT id, name, type, description FROM categories WHERE TYPE = %s ORDER BY name
+        """
+        results = db.execute_query(query, (category_type))
+        db.disconnect()
+        
+        categories = []
+       
+        # TODO: Convert results to Category objects
+        # Loop through results and create Category instances
+        
+        for row in results:
+            categories.append(
+                Category(
+                    name=row["name"],
+                    category_type=row["type"],
+                    description=row["description"],
+                    category_id=row["id"]
+                )
+            )
+        return categories
+
     @staticmethod
     def get_by_id(category_id):
         """
@@ -135,8 +190,29 @@ class Category:
         Returns:
             Category: Category object or None if not found
         """
+        db = DatabaseConnection()
+        db.connect()
+
         # TODO: Implement get_by_id
-        pass
+        query = """
+        SELECT id, name, type, description
+        FROM categories
+        WHERE id = %s
+        """
+        result = db.execute_query(query, (category_id,))
+        db.disconnect()
+
+        if result:
+            row = result[0]
+            return Category(
+                name=row["name"],
+                category_type=row["type"],
+                description=row["description"],
+                category_id=row["id"]
+            )
+
+        return None
+
     
     def get_transaction_count(self):
         """
@@ -152,13 +228,10 @@ class Category:
         
         # TODO: Count transactions in this category
         query = """
-        -- TODO: COUNT transactions for this category
-        -- SELECT COUNT(*) as count FROM transactions WHERE category_id = %s
+        SELECT COUNT(*) as count FROM transactions WHERE category_id = %s
         """
-        
-        result = self.db.execute_query(query, (self.id,))
+        result = self.db.execute_query(query, (self.id))
         self.db.disconnect()
-        
         return result[0]['count'] if result else 0
     
     def delete(self):
@@ -175,6 +248,7 @@ class Category:
             
         # Check if category is in use
         transaction_count = self.get_transaction_count()
+       
         if transaction_count > 0:
             print(f"⚠️  Category has {transaction_count} transactions. They will be uncategorized.")
             response = input("Continue? (y/N): ")
@@ -184,9 +258,22 @@ class Category:
         
         # TODO: Implement delete
         # DELETE FROM categories WHERE id = %s
+        try:
+            query = """
+            DELETE FROM categories
+            WHERE id = %s
+            """
+            self.db.execute_update(query, (self.id))
+
+        except Exception as e:
+            print(f"❌ Error deleting category: {e}")
+            return False
         
-        pass
-    
+        finally:
+            self.db.disconnect()
+
+        return True
+
     def __str__(self):
         """
         String representation of category

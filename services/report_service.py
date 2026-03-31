@@ -214,7 +214,7 @@ class ReportService:
 
             for t in transactions:
                 if t.transaction_type == 'expense':
-                    daily_spending[t.date] += t.amount
+                    daily_spending[t.transaction_date] += t.amount
 
             most_active_days = []
             max_spent = 0
@@ -228,10 +228,10 @@ class ReportService:
                 report.append(f"- {format_date(d)} ({format_currency(max_spent)})")
 
             first_half = sum(t.amount for t in transactions
-                if t.transaction_type == 'expense' and t.date < mid_date)
+                if t.transaction_type == 'expense' and t.transaction_date < mid_date)
 
             second_half = sum(t.amount for t in transactions
-                if t.transaction_type == 'expense' and t.date >= mid_date)
+                if t.transaction_type == 'expense' and t.transaction_date >= mid_date)
 
             if second_half > first_half:
                 trend = "📈 Increasing"
@@ -289,7 +289,7 @@ class ReportService:
         if recent_transactions:
             for t in recent_transactions[:5]:  # show latest 5
                 dashboard.append(
-                    f"{format_date(t.date)} | {t.category} | {format_currency(t.amount)}"
+                    f"{format_date(t.transaction_date)} | {t.category} | {format_currency(t.amount)}"
                  )
         else:
             dashboard.append("No recent transactions.")

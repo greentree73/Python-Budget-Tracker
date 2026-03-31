@@ -427,9 +427,83 @@ class BudgetTracker:
         # TODO: Implement report generation
         # Use ReportService methods to generate different reports
         # Allow user to choose report type and parameters
+             
+        choice = input("\nSelect report type (1-5): ").strip()
+
+        report_content = None
+
+        if choice == "1":
+            report_content = ReportService.get_balance_summary()
+            print(report_content)
+
+        elif choice == "2":
+            print("\nSelect type:")
+            print("1. Expense")
+            print("2. Income")
+
+            t_choice = input("Enter choice: ").strip()
+            transaction_type = "expense" if t_choice == "1" else "income"
+
+            report_content = ReportService.get_category_report(transaction_type)
+            print(report_content)
+
+        elif choice == "3":
+            try:
+                year = int(input("Enter year (e.g., 2026): "))
+                month = int(input("Enter month (1-12): "))
+            except ValueError:
+                print("❌ Invalid year/month")
+                return
+
+            report_content = ReportService.get_monthly_report(year, month)
+            print(report_content)
+
+        elif choice == "4":
+            report_content = ReportService.get_trend_analysis()
+            print(report_content)
+
+        elif choice == "5":
+            print("\nExport Options:")
+            print("1. Balance Summary")
+            print("2. Category Report")
+            print("3. Monthly Report")
+            print("4. Trend Analysis")
+
+            export_choice = input("Choose report to export: ").strip()
+
+            if export_choice == "1":
+                report_content = ReportService.get_balance_summary()
+
+            elif export_choice == "2":
+                t_choice = input("Expense or Income? ").strip().lower()
+                report_content = ReportService.get_category_report(t_choice)
+
+            elif export_choice == "3":
+                try:
+                    year = int(input("Enter year: "))
+                    month = int(input("Enter month: "))
+                except ValueError:
+                    print("❌ Invalid input")
+                    return
+                report_content = ReportService.get_monthly_report(year, month)
+
+            elif export_choice == "4":
+                report_content = ReportService.get_trend_analysis()
+
+            else:
+                print("❌ Invalid choice")
+                return
+
+            filename = input("Enter filename (e.g., report.txt): ").strip()
+
+            ReportService.export_report(report_content, filename)
+            return
+
+        else:
+            print("❌ Invalid choice")
+            return
+
         
-        pass  # Remove when implemented
-    
     def manage_categories(self):
         """
         Manage transaction categories
@@ -459,8 +533,34 @@ class BudgetTracker:
         # 1. Get search term from user
         # 2. Use TransactionService.search_transactions()
         # 3. Display matching results
-        
-        pass  # Remove when implemented
+             
+        # 1. Get search term from user
+        search_term = input("Enter search term (description/category/type): ").strip()
+
+        if not search_term:
+            print("❌ Search term cannot be empty.")
+            return
+
+        # 2. Call service
+        results = TransactionService.search_transactions(search_term)
+
+        # 3. Display results
+        if not results:
+            print("No matching transactions found.")
+            return
+
+        print(f"\n✅ Found {len(results)} matching transaction(s):\n")
+
+        for tx in results:
+            print("-" * 40)
+            print(f"ID: {tx.id}")
+            print(f"Date: {format_date(tx.date)}")
+            print(f"Description: {tx.description}")
+            print(f"Category: {tx.category}")
+            print(f"Type: {tx.transaction_type}")
+            print(f"Amount: {format_currency(tx.amount)}")
+    
+        print("-" * 40)
     
     def show_settings(self):
         """
@@ -559,7 +659,8 @@ def main():
             return
         
         # Create and start the application
-                  
+
+        app = BudgetTracker()        
         app.start()                        
         
     except KeyboardInterrupt:
