@@ -27,7 +27,20 @@ def format_currency(amount, currency_symbol="$"):
     # 4. Add currency symbol
     # 5. Handle negative amounts with parentheses or minus sign
     
-    pass  # Remove when implemented
+    if amount is None:
+        return f"{currency_symbol}0.00"
+
+    amount = Decimal(amount)
+
+    is_negative = amount < 0
+    amount = abs(amount)
+
+    formatted = f"{amount:,.2f}"
+
+    if is_negative:
+        return f"-{currency_symbol}{formatted}"
+    else:
+        return f"{currency_symbol}{formatted}"
 
 def format_date(date_obj, format_style="short"):
     """
@@ -45,7 +58,17 @@ def format_date(date_obj, format_style="short"):
     # medium: Mar 15, 2024
     # long: March 15, 2024
     
-    pass  # Remove when implemented
+    if not date_obj:
+        return ""
+
+    if format_style == "short":
+        return date_obj.strftime("%m/%d/%Y")
+    elif format_style == "medium":
+        return date_obj.strftime("%b %d, %Y")
+    elif format_style == "long":
+        return date_obj.strftime("%B %d, %Y")
+    else:
+        return str(date_obj)
 
 def format_transaction(transaction):
     """
@@ -62,7 +85,15 @@ def format_transaction(transaction):
     # Include: date, amount, category, description
     # Different formatting for income vs expense
     
-    pass  # Remove when implemented
+    if not transaction:
+        return ""
+
+    date_str = format_date(transaction.transaction_date, "short")
+    amount_str = format_currency(transaction.amount)
+
+    category = getattr(transaction, "category_name", str(transaction.category_id))
+
+    return f"{date_str} | {amount_str} | {category} | {transaction.description}"
 
 def format_table(data, headers, column_widths=None):
     """
@@ -82,7 +113,28 @@ def format_table(data, headers, column_widths=None):
     # 3. Format each data row
     # 4. Handle text alignment (left/right/center)
     
-    pass  # Remove when implemented
+    if not data:
+        return "No data available."
+
+    if not column_widths:
+        column_widths = [max(len(str(item)) for item in col)
+                         for col in zip(headers, *data)]
+
+    def format_row(row):
+        return " | ".join(
+            str(val).ljust(width) for val, width in zip(row, column_widths)
+        )
+
+    header_row = format_row(headers)
+    separator = "-+-".join("-" * w for w in column_widths)
+
+    rows = [header_row, separator]
+
+    for row in data:
+        rows.append(format_row(row))
+
+    return "\n".join(rows)
+
 
 def format_percentage(value, decimal_places=1):
     """
@@ -98,7 +150,11 @@ def format_percentage(value, decimal_places=1):
     # TODO: Implement percentage formatting
     # Convert decimal to percentage and add % symbol
     
-    pass  # Remove when implemented
+    if value is None:
+        return "0%"
+
+    percent_value = float(value) * 100
+    return f"{percent_value:.{decimal_places}f}%"
 
 def format_number(number, decimal_places=2, use_commas=True):
     """
@@ -117,7 +173,14 @@ def format_number(number, decimal_places=2, use_commas=True):
     # 2. Round to specified decimal places
     # 3. Add commas if requested
     
-    pass  # Remove when implemented
+    if number is None:
+        number = 0
+
+    if use_commas:
+        return f"{number:,.{decimal_places}f}"
+    else:
+        return f"{number:.{decimal_places}f}"
+
 
 def format_list_summary(items, max_items=5):
     """
@@ -133,7 +196,17 @@ def format_list_summary(items, max_items=5):
     # TODO: Implement list summary formatting
     # Show first max_items, then "... and X more" if longer
     
-    pass  # Remove when implemented
+    if not items:
+        return ""
+
+    displayed = items[:max_items]
+    result = ", ".join(str(item) for item in displayed)
+
+    if len(items) > max_items:
+        result += f" ... and {len(items) - max_items} more"
+
+    return result
+
 
 def colorize_text(text, color="white"):
     """
@@ -151,7 +224,20 @@ def colorize_text(text, color="white"):
     # Colors: red, green, yellow, blue, magenta, cyan, white
     
     # For now, just return the text unchanged
-    return text
+    colors = {
+        "red": "\033[31m",
+        "green": "\033[32m",
+        "yellow": "\033[33m",
+        "blue": "\033[34m",
+        "magenta": "\033[35m",
+        "cyan": "\033[36m",
+        "white": "\033[37m",
+    }
+    reset = "\033[0m"
+
+    color_code = colors.get(color.lower(), colors["white"])
+    return f"{color_code}{text}{reset}"
+
 
 def format_bar_chart(data, width=50):
     """
@@ -168,7 +254,19 @@ def format_bar_chart(data, width=50):
     # Create horizontal bars using characters like █
     # Scale bars based on maximum value
     
-    pass  # Remove when implemented
+    if not data:
+        return ""
+
+    max_value = max(data.values()) if data.values() else 1
+
+    lines = []
+    for label, value in data.items():
+        bar_length = int((value / max_value) * width) if max_value else 0
+        bar = "█" * bar_length
+        lines.append(f"{label.ljust(15)} | {bar} {value}")
+
+    return "\n".join(lines)
+
 
 def truncate_text(text, max_length, suffix="..."):
     """
@@ -185,7 +283,13 @@ def truncate_text(text, max_length, suffix="..."):
     # TODO: Implement text truncation
     # Add suffix only if text was actually truncated
     
-    pass  # Remove when implemented
+    if not text:
+        return ""
+
+    if len(text) <= max_length:
+        return text
+
+    return text[:max_length - len(suffix)] + suffix
 
 def center_text(text, width, fill_char=" "):
     """
@@ -201,7 +305,10 @@ def center_text(text, width, fill_char=" "):
     """
     # TODO: Implement text centering
     
-    pass  # Remove when implemented
+    if not text:
+        text = ""
+
+    return text.center(width, fill_char)
 
 def main():
     """

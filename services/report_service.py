@@ -202,8 +202,8 @@ class ReportService:
         if not transactions:
             report.append("No transactions found.")
         else:
-            total_spending = sum(t.amount for t in transactions if t.transaction_type == 'expense')
-            total_income = sum(t.amount for t in transactions if t.transaction_type == 'income')
+            total_spending = sum(t.amount for t in transactions if t.type == 'expense')
+            total_income = sum(t.amount for t in transactions if t.type == 'income')
 
             daily_spending = defaultdict(float)
             daily_avg_spending = total_spending / days if days else 0
@@ -213,7 +213,7 @@ class ReportService:
             report.append(f"Daily Avg Spending: {format_currency(daily_avg_spending)}")
 
             for t in transactions:
-                if t.transaction_type == 'expense':
+                if t.type == 'expense':
                     daily_spending[t.transaction_date] += t.amount
 
             most_active_days = []
@@ -228,10 +228,10 @@ class ReportService:
                 report.append(f"- {format_date(d)} ({format_currency(max_spent)})")
 
             first_half = sum(t.amount for t in transactions
-                if t.transaction_type == 'expense' and t.transaction_date < mid_date)
+                if t.type == 'expense' and t.transaction_date < mid_date)
 
             second_half = sum(t.amount for t in transactions
-                if t.transaction_type == 'expense' and t.transaction_date >= mid_date)
+                if t.type == 'expense' and t.transaction_date >= mid_date)
 
             if second_half > first_half:
                 trend = "📈 Increasing"
@@ -276,9 +276,9 @@ class ReportService:
         # Balance Overview
         dashboard.append("\n💰 BALANCE OVERVIEW")
         dashboard.append("-" * 30)
-        dashboard.append(f"Income: {format_currency(summary['total_income'])}")
-        dashboard.append(f"Expenses: {format_currency(summary['total_expenses'])}")
-        dashboard.append(f"Net: {format_currency(summary['net_balance'])}")
+        dashboard.append(f"Income: {format_currency(summary.get('total_income', 0))}")
+        dashboard.append(f"Expenses: {format_currency(summary.get('total_expenses', 0))}")
+        dashboard.append(f"Net: {format_currency(summary.get('net_balance', 0))}")
 
         #Recent Activity (Last 7 days)
         dashboard.append("\n📅 RECENT ACTIVITY (Last 7 Days)")
@@ -286,14 +286,15 @@ class ReportService:
         end_date = date.today()
         start_date = end_date - timedelta(days=7)
         recent_transactions = Transaction.get_by_date_range(start_date, end_date)
+
         if recent_transactions:
-            for t in recent_transactions[:5]:  # show latest 5
+            for t in recent_transactions[:5]:
                 dashboard.append(
-                    f"{format_date(t.transaction_date)} | {t.category} | {format_currency(t.amount)}"
-                 )
+                    f"{format_date(t.transaction_date)} | {t.category_id} | {format_currency(t.amount)}"
+            )
         else:
             dashboard.append("No recent transactions.")
-    
+
         # Top Categories
         dashboard.append("\n🏷️ TOP SPENDING CATEGORIES")
         dashboard.append("-" * 30)

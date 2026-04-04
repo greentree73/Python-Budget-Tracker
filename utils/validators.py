@@ -6,7 +6,7 @@ Input validation functions for the budget tracker
 TODO: Complete the validation functions
 """
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 import re
 
@@ -30,7 +30,26 @@ def validate_amount(amount_input):
     # 4. Convert to Decimal
     # 5. Ensure max 2 decimal places for currency
     
-    pass  # Remove when implemented
+    if amount_input is None:
+        raise ValueError("Amount cannot be empty")
+
+    # Convert to string and clean
+    amount_str = str(amount_input).replace("$", "").replace(",", "").strip()
+
+    try:
+        amount = Decimal(amount_str)
+    except InvalidOperation:
+        raise ValueError("Invalid amount format")
+
+    if amount <= 0:
+        raise ValueError("Amount must be positive")
+
+    # Ensure max 2 decimal places
+    if abs(amount.as_tuple().exponent) > 2:
+        raise ValueError("Amount cannot have more than 2 decimal places")
+
+    return amount
+
 
 def validate_date(date_input):
     """
@@ -51,7 +70,42 @@ def validate_date(date_input):
     # 3. Check if date is not in the future (optional)
     # 4. Check if date is not too old (optional, e.g., > 10 years ago)
     
-    pass  # Remove when implemented
+    if isinstance(date_input, date):
+        return date_input
+
+    if not isinstance(date_input, str):
+        raise ValueError("Invalid date input")
+
+    date_input = date_input.strip().lower()
+
+    today = date.today()
+
+    formats = ["%Y-%m-%d", "%m/%d/%Y", "%d/%m/%Y"]
+
+    parsed_date = None
+
+    for fmt in formats:
+        try:
+            parsed_date = datetime.strptime(date_input, fmt).date()
+            break
+        except ValueError:
+            continue
+
+    if date_input == "today":
+        parsed_date = today
+
+    if not parsed_date:
+        raise ValueError("Invalid date format")
+
+    # Optional constraints
+    if parsed_date > today:
+        raise ValueError("Date cannot be in the future")
+
+    if parsed_date < today - timedelta(days=365 * 10):
+        raise ValueError("Date is too far in the past")
+
+    return parsed_date
+
 
 def validate_transaction_type(transaction_type):
     """
@@ -72,7 +126,21 @@ def validate_transaction_type(transaction_type):
     #                       'out', 'expense', 'exp', '-' for expense
     # 3. Return standardized 'income' or 'expense'
     
-    pass  # Remove when implemented
+    if not transaction_type:
+        raise ValueError("Transaction type is required")
+
+    t = str(transaction_type).strip().lower()
+
+    income_aliases = {"income", "in", "+"}
+    expense_aliases = {"expense", "exp", "out", "-"}
+
+    if t in income_aliases:
+        return "income"
+    elif t in expense_aliases:
+        return "expense"
+    else:
+        raise ValueError("Invalid transaction type")
+
 
 def validate_description(description):
     """
@@ -93,7 +161,22 @@ def validate_description(description):
     # 3. Check maximum length (e.g., 200 characters)
     # 4. Optional: Clean up extra whitespace
     
-    pass  # Remove when implemented
+    if not description:
+        raise ValueError("Description cannot be empty")
+
+    desc = str(description).strip()
+
+    if len(desc) < 3:
+        raise ValueError("Description must be at least 3 characters")
+
+    if len(desc) > 200:
+        raise ValueError("Description cannot exceed 200 characters")
+
+    # Clean extra whitespace
+    desc = re.sub(r"\s+", " ", desc)
+
+    return desc
+
 
 def validate_category_name(name):
     """
@@ -114,7 +197,18 @@ def validate_category_name(name):
     # 3. Allow letters, numbers, spaces, and basic punctuation
     # 4. No leading/trailing spaces
     
-    pass  # Remove when implemented
+    if not name:
+        raise ValueError("Category name cannot be empty")
+
+    name = str(name).strip().title()
+
+    if len(name) < 2 or len(name) > 50:
+        raise ValueError("Category name must be between 2 and 50 characters")
+
+    if not re.match(r"^[A-Za-z0-9\s\-&]+$", name):
+        raise ValueError("Category name contains invalid characters")
+
+    return name
 
 def validate_positive_integer(value, field_name="value"):
     """
@@ -135,7 +229,15 @@ def validate_positive_integer(value, field_name="value"):
     # 2. Check if positive (> 0)
     # 3. Provide meaningful error messages using field_name
     
-    pass  # Remove when implemented
+    try:
+        val = int(value)
+    except (ValueError, TypeError):
+        raise ValueError(f"{field_name} must be an integer")
+
+    if val <= 0:
+        raise ValueError(f"{field_name} must be positive")
+
+    return val
 
 def is_valid_email(email):
     """
@@ -150,7 +252,11 @@ def is_valid_email(email):
     # TODO: Implement basic email validation using regex
     # Pattern: basic email format with @ and domain
     
-    pass  # Remove when implemented
+    if not email:
+        return False
+
+    pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+    return bool(re.match(pattern, email))
 
 def validate_date_range(start_date, end_date):
     """
@@ -171,7 +277,20 @@ def validate_date_range(start_date, end_date):
     # 2. Check reasonable range (not more than 10 years)
     # 3. Both dates not in the future
     
-    pass  # Remove when implemented
+    if not isinstance(start_date, date) or not isinstance(end_date, date):
+        raise ValueError("Start and end dates must be date objects")
+
+    if start_date > end_date:
+        raise ValueError("Start date cannot be after end date")
+
+    if end_date > date.today():
+        raise ValueError("End date cannot be in the future")
+
+    if end_date - start_date > timedelta(days=365 * 10):
+        raise ValueError("Date range cannot exceed 10 years")
+
+    return start_date, end_date
+
 
 def sanitize_input(user_input, max_length=None):
     """
@@ -193,7 +312,16 @@ def sanitize_input(user_input, max_length=None):
     # 3. Limit length if max_length provided
     # 4. Handle Unicode properly
     
-    pass  # Remove when implemented
+    # Strip whitespace
+    cleaned = user_input.strip()
+
+    # Remove dangerous characters
+    cleaned = re.sub(r"[<>\"'%;()&+]", "", cleaned)
+
+    if max_length and len(cleaned) > max_length:
+        cleaned = cleaned[:max_length]
+
+    return cleaned
 
 def main():
     """

@@ -31,9 +31,10 @@ class DatabaseConnection:
         self.database = os.getenv("DB_NAME", "budget_tracker")  # TODO: Get from environment  
         self.user = os.getenv("DB_USER", "postgres")  # TODO: Get from environment
         self.password = os.getenv("DB_PASSWORD", "root")  # TODO: Get from environment
-        self.port = os.getenv("DB_PORT", 5432)  # TODO: Get from environment (default: 5432)
+        self.port = int(os.getenv("DB_PORT", 5432))  # TODO: Get from environment (default: 5432)
         
         self.connection = None
+        self.connect()  # ✅ establish connection here
     
     def connect(self):
         """
@@ -48,7 +49,7 @@ class DatabaseConnection:
             # Set cursor_factory=RealDictCursor for dictionary-like results
             self.connection = psycopg.connect(
                 host=self.host,
-                database=self.database,
+                dbname=self.database,
                 user=self.user,
                 password=self.password,
                 port=self.port,
@@ -58,6 +59,7 @@ class DatabaseConnection:
             return True
         except Exception as e:
             print(f"�� Database connection failed: {e}")
+            self.connection = None
             return False
          
     def disconnect(self):
@@ -81,20 +83,31 @@ class DatabaseConnection:
         Returns:
             list: Query results as list of dictionaries
         """
-        try:
-            # TODO: Execute query using cursor
-            # 1. Create cursor from self.connection
-            # 2. Execute query with optional parameters
-            # 3. Fetch and return results
-            # 4. Close cursor
-         
-            with self.connection.cursor() as cursor:
-                cursor.execute(query, params or ())
+       
+        # TODO: Execute query using cursor
+        # 1. Create cursor from self.connection
+        # 2. Execute query with optional parameters
+        # 3. Fetch and return results
+        # 4. Close cursor
             
+        try:
+            if self.connection is None:
+                raise Exception("Database connection is not initialized")
+
+            with self.connection.cursor() as cursor:
+                if params:
+                    cursor.execute(query, params)
+                else:
+                    cursor.execute(query)
+
                 # If SELECT query → fetch results
                 if cursor.description:
-                    return cursor.fetchall()
-                            
+                    result = cursor.fetchall()
+
+                # For INSERT/UPDATE/DELETE → commit
+                self.connection.commit()
+                return result if result is not None else []
+
         except Exception as e:
             print(f"❌ Query execution failed: {e}")
             return []
@@ -154,7 +167,6 @@ class DatabaseConnection:
                 else:
                     print("⚠️  No tables found. Run schema.sql to create tables.")
                 
-                self.disconnect()
                 return True
             else:
                 print("❌ Connection established but query failed")

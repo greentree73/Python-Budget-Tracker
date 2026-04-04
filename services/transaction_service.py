@@ -64,8 +64,8 @@ class TransactionService:
             amount=amount,
             description=description.strip(),
             transaction_date=transaction_date,
-            category=category_id,
-            type=transaction_type
+            category_id =category_id,
+            transaction_type=transaction_type
             )
 
             # 6. Save transaction
@@ -118,7 +118,7 @@ class TransactionService:
                 transaction.transaction_date = validate_date(transaction_date)
 
             if category_id is not None:
-                transaction.category = category_id
+                transaction.category_id = category_id
 
             # 3. Save changes
             return transaction.save()
@@ -174,7 +174,73 @@ class TransactionService:
         # TODO: Implement transaction filtering
         # Use appropriate Transaction class methods based on filters
         
-        pass
+        # Filter by type
+        if transaction_type:
+            transaction_type = transaction_type.strip().lower()
+            transactions = [t for t in transactions if t.type == transaction_type]
+
+        # Filter by category
+        if category_id:
+            transactions = [t for t in transactions if t.category_id == category_id]
+
+        # Filter by date range
+        if start_date:
+            start_date = validate_date(start_date)
+            transactions = [t for t in transactions if t.transaction_date >= start_date]
+
+        if end_date:
+            end_date = validate_date(end_date)
+            transactions = [t for t in transactions if t.transaction_date <= end_date]
+
+        # Apply limit
+        if limit:
+            transactions = transactions[:limit]
+
+        return transactions@staticmethod
+    def get_transactions(limit=None, transaction_type=None, category_id=None,
+                        start_date=None, end_date=None):
+        """
+        Get transactions with optional filtering
+        
+        Args:
+            limit (int, optional): Maximum number to return
+            transaction_type (str, optional): 'income' or 'expense'
+            category_id (int, optional): Category ID filter
+            start_date (date, optional): Start date filter
+            end_date (date, optional): End date filter
+            
+        Returns:
+            list: List of Transaction objects
+        """
+        # TODO: Implement transaction filtering
+        # Use appropriate Transaction class methods based on filters
+        
+        transactions = Transaction.get_all()
+        # Filter by type
+        if transaction_type:
+            transaction_type = transaction_type.strip().lower()
+            transactions = [t for t in transactions if t.type == transaction_type]
+
+        # Filter by category
+        if category_id:
+            transactions = [t for t in transactions if t.category_id == category_id]
+
+        # Filter by date range
+        if start_date:
+            start_date = validate_date(start_date)
+            transactions = [t for t in transactions if t.transaction_date >= start_date]
+
+        if end_date:
+            end_date = validate_date(end_date)
+            transactions = [t for t in transactions if t.transaction_date <= end_date]
+
+        # Apply limit
+        if limit:
+            transactions = transactions[:limit]
+
+        return transactions
+
+
 
     @staticmethod
     def get_transaction_by_id(transaction_id):
@@ -194,7 +260,17 @@ class TransactionService:
         # TODO: Implement transaction search
         # Get all transactions and filter by description containing search_term
         
-        pass
+        if not search_term:
+            return []
+
+        transactions = Transaction.get_all()
+        search_term = search_term.lower()
+
+        return [
+            t for t in transactions
+            if search_term in (t.description or "").lower()
+        ]
+
     
     @staticmethod
     def get_transaction_summary():
@@ -224,7 +300,15 @@ class TransactionService:
         }
         
         # TODO: Loop through transactions and calculate totals
-        
+        for t in transactions:
+            if t.type == 'income':
+                summary['total_income'] += t.amount
+                summary['income_count'] += 1
+            elif t.type == 'expense':
+                summary['total_expenses'] += t.amount
+                summary['expense_count'] += 1
+
+        summary['net_balance'] = summary['total_income'] - summary['total_expenses']
         return summary
     
     @staticmethod
@@ -243,7 +327,22 @@ class TransactionService:
         # 2. Group by category and sum amounts
         # 3. Return as dictionary {category_name: total_amount}
         
-        pass
+        transactions = Transaction.get_all()
+
+        category_totals = {}
+
+        for t in transactions:
+            if t.type != transaction_type:
+                continue
+
+            # Use category_id (since no category name in transaction model)
+            key = f"Category {t.category_id}" if t.category_id else "Uncategorized"
+            if key not in category_totals:
+                category_totals[key] = Decimal('0')
+            category_totals[key] += t.amount
+
+        return category_totals
+
     
     @staticmethod
     def get_monthly_summary(year=None, month=None):
@@ -264,8 +363,31 @@ class TransactionService:
             
         # TODO: Get transactions for specified month
         # Calculate monthly totals
+
+        transactions = Transaction.get_all()
+
+        monthly_transactions = [
+        t for t in transactions
+            if t.transaction_date.year == year and t.transaction_date.month == month
+        ]
+
+        summary = {
+        'total_income': Decimal('0'),
+        'total_expenses': Decimal('0'),
+        'net_balance': Decimal('0'),
+        'transaction_count': len(monthly_transactions)
+        }
+
+        for t in monthly_transactions:
+            if t.type == 'income':
+                summary['total_income'] += t.amount
+            elif t.type == 'expense':
+                summary['total_expenses'] += t.amount
+
+        summary['net_balance'] = summary['total_income'] - summary['total_expenses']
+
+        return summary
         
-        pass
 
 def main():
     """

@@ -1,0 +1,20 @@
+
+==================================================
+📅 MONTHLY REPORT - MARCH 2024
+==================================================
+Total Income: $3,200.00
+Total Expenses: $785.79
+Net Balance: $2,414.21
+Transaction Count: 10
+Average Transaction: $398.58
+
+🏷️ TOP SPENDING CATEGORIES
+------------------------------
+Category 9: $280.00 (35.63%)
+Category 4: $195.80 (24.92%)
+Category 8: $150.00 (19.09%)
+Category 6: $89.99 (11.45%)
+Category 5: $45.00 (5.73%)
+
+Generated: 04/03/2026
+==================================================

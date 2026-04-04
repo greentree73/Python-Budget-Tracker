@@ -120,7 +120,7 @@ class Category:
         query = """
         SELECT id, name, type, description FROM categories ORDER BY type, name
         """
-        results = db.execute_query((query), )
+        results = db.execute_query(query)
         db.disconnect()
         
         categories = []
@@ -158,9 +158,9 @@ class Category:
         # Similar to get_all() but with WHERE type = %s
         
         query = """
-        SELECT id, name, type, description FROM categories WHERE TYPE = %s ORDER BY name
+        SELECT id, name, type, description FROM categories WHERE type = %s ORDER BY name
         """
-        results = db.execute_query(query, (category_type))
+        results = db.execute_query(query, (category_type,))
         db.disconnect()
         
         categories = []
@@ -230,8 +230,10 @@ class Category:
         query = """
         SELECT COUNT(*) as count FROM transactions WHERE category_id = %s
         """
-        result = self.db.execute_query(query, (self.id))
+        result = self.db.execute_query(query, (self.id,))
+
         self.db.disconnect()
+        
         return result[0]['count'] if result else 0
     
     def delete(self):
@@ -263,7 +265,7 @@ class Category:
             DELETE FROM categories
             WHERE id = %s
             """
-            self.db.execute_update(query, (self.id))
+            self.db.execute_update(query, (self.id,))
 
         except Exception as e:
             print(f"❌ Error deleting category: {e}")

@@ -48,8 +48,7 @@ class BudgetTracker:
             print("💡 Make sure PostgreSQL is running and .env is configured.")
             return
         
-        print("✅ Database connection successful!")
-        
+               
         # Show welcome dashboard
         self.show_dashboard()
         
@@ -266,7 +265,7 @@ class BudgetTracker:
             print("-" * 60)
 
             for t in transactions:
-                print(f"{t.id} | {t.type} | {t.amount} | {t.category} | {t.transaction_date} | {t.description}")
+                print(f"{t.id} | {t.type} | {t.amount} | {t.category_id} | {t.transaction_date} | {t.description}")
 
         except Exception as e:
             print(f"❌ Error viewing transactions: {e}")
@@ -300,7 +299,7 @@ class BudgetTracker:
             print("-" * 60)
 
             for t in transactions:
-                print(f"{t.id} | {t.type} | {t.amount} | {t.category} | {t.transaction_date} | {t.description}")
+                print(f"{t.id} | {t.type} | {t.amount} | {t.category_id} | {t.transaction_date} | {t.description}")
 
             # 2. Ask for transaction ID
             try:
@@ -322,7 +321,7 @@ class BudgetTracker:
             new_amount = input(f"Amount ({transaction.amount}): ").strip()
             new_description = input(f"Description ({transaction.description}): ").strip()
             new_date = input(f"Date ({transaction.transaction_date}): ").strip()
-            new_category = input(f"Category ID ({transaction.category}): ").strip()
+            new_category = input(f"Category ID ({transaction.category_id}): ").strip()
 
             # 5. Prepare values (only update if provided)
             updated_amount = new_amount if new_amount else None
@@ -347,8 +346,7 @@ class BudgetTracker:
         except Exception as e:
             print(f"❌ Error editing transaction: {e}")
         
-            
-    
+       
     def delete_transaction(self):
         """
         Delete a transaction
@@ -375,7 +373,7 @@ class BudgetTracker:
             print("-" * 60)
 
             for t in transactions:
-                print(f"{t.id} | {t.type} | {t.amount} | {t.category} | {t.transaction_date} | {t.description}")
+                print(f"{t.id} | {t.type} | {t.amount} | {t.category_id} | {t.transaction_date} | {t.description}")
 
             # 2. Ask for transaction ID
             try:
@@ -433,7 +431,7 @@ class BudgetTracker:
         report_content = None
 
         if choice == "1":
-            report_content = ReportService.get_balance_summary()
+            report_content = ReportService.generate_balance_report()
             print(report_content)
 
         elif choice == "2":
@@ -444,7 +442,7 @@ class BudgetTracker:
             t_choice = input("Enter choice: ").strip()
             transaction_type = "expense" if t_choice == "1" else "income"
 
-            report_content = ReportService.get_category_report(transaction_type)
+            report_content = ReportService.generate_category_report(transaction_type)
             print(report_content)
 
         elif choice == "3":
@@ -455,11 +453,11 @@ class BudgetTracker:
                 print("❌ Invalid year/month")
                 return
 
-            report_content = ReportService.get_monthly_report(year, month)
+            report_content = ReportService.generate_monthly_report(year, month)
             print(report_content)
 
         elif choice == "4":
-            report_content = ReportService.get_trend_analysis()
+            report_content = ReportService.generate_trend_report()
             print(report_content)
 
         elif choice == "5":
@@ -472,11 +470,11 @@ class BudgetTracker:
             export_choice = input("Choose report to export: ").strip()
 
             if export_choice == "1":
-                report_content = ReportService.get_balance_summary()
+                report_content = ReportService.generate_balance_report()
 
             elif export_choice == "2":
                 t_choice = input("Expense or Income? ").strip().lower()
-                report_content = ReportService.get_category_report(t_choice)
+                report_content = ReportService.generate_category_report(t_choice)
 
             elif export_choice == "3":
                 try:
@@ -485,10 +483,10 @@ class BudgetTracker:
                 except ValueError:
                     print("❌ Invalid input")
                     return
-                report_content = ReportService.get_monthly_report(year, month)
+                report_content = ReportService.generate_monthly_report(year, month)
 
             elif export_choice == "4":
-                report_content = ReportService.get_trend_analysis()
+                report_content = ReportService.generate_trend_report()
 
             else:
                 print("❌ Invalid choice")
@@ -496,7 +494,7 @@ class BudgetTracker:
 
             filename = input("Enter filename (e.g., report.txt): ").strip()
 
-            ReportService.export_report(report_content, filename)
+            ReportService.export_report_to_file(report_content, filename)
             return
 
         else:
@@ -516,11 +514,77 @@ class BudgetTracker:
         print("2. Add New Category")
         print("3. Edit Category")
         print("4. Delete Category")
+
+        choice = input("Select option: ").strip()
         
         # TODO: Implement category management
         # CRUD operations for categories
         
-        pass  # Remove when implemented
+        try:
+            if choice == "1":
+                categories = Category.get_all()
+                
+                if not categories:
+                    print("No categories found.")
+                    return
+
+                print("\nID | Name | Type | Description")
+                print("-" * 40)
+            
+                for c in categories:
+                    print(f"{c.id} | {c.name} | {c.type} | {c.description}")
+
+            elif choice == "2":
+                name = input("Category name: ").strip()
+                type_ = input("Type (income/expense): ").strip().lower()
+                description = input("Description: ").strip()
+                category = Category(name=name, type=type_, description=description)
+                if category.save():
+                    print("✅ Category added successfully")
+
+            elif choice == "3":
+                category_id = int(input("Enter category ID to edit: "))
+                category = Category.get_by_id(category_id)
+
+                if not category:
+                    print("❌ Category not found")
+                    return
+
+                name = input(f"Name ({category.name}): ").strip()
+                type_ = input(f"Type ({category.type}): ").strip()
+                description = input(f"Description ({category.description}): ").strip()
+
+                if name:
+                    category.name = name
+                if type_:
+                    category.type = type_
+                if description:
+                    category.description = description
+
+                if category.save():
+                    print("✅ Category updated successfully")
+
+            elif choice == "4":
+                category_id = int(input("Enter category ID to delete: "))
+                category = Category.get_by_id(category_id)
+
+                if not category:
+                    print("❌ Category not found")
+                    return
+
+                confirm = input("Are you sure? (y/n): ").strip().lower()
+                if confirm != "y":
+                    print("Cancelled.")
+                    return
+
+                if category.delete():
+                    print("✅ Category deleted successfully")
+
+            else:
+                print("❌ Invalid option")
+
+        except Exception as e:
+            print(f"❌ Error managing categories: {e}")
     
     def search_transactions(self):
         """
@@ -554,10 +618,10 @@ class BudgetTracker:
         for tx in results:
             print("-" * 40)
             print(f"ID: {tx.id}")
-            print(f"Date: {format_date(tx.date)}")
+            print(f"Date: {format_date(tx.transaction_date)}")
             print(f"Description: {tx.description}")
             print(f"Category: {tx.category}")
-            print(f"Type: {tx.transaction_type}")
+            print(f"Type: {tx.type}")
             print(f"Amount: {format_currency(tx.amount)}")
     
         print("-" * 40)
@@ -574,11 +638,40 @@ class BudgetTracker:
         print("2. Export All Data")
         print("3. Import Data")
         print("4. Reset Application")
+
+        choice = input("Select option: ").strip()
         
         # TODO: Implement settings management
         # Database info, backup/restore, etc.
         
-        pass  # Remove when implemented
+        try:
+            if choice == "1":
+                print("\n📊 Database Info:")
+                print(self.db.get_connection_info())
+
+            elif choice == "2":
+                print("\nExporting all data...")
+                data = ReportService.export_all_data()
+                filename = f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                ReportService.export_to_file(data, filename)
+                print(f"✅ Data exported to {filename}")
+
+            elif choice == "3":
+                filename = input("Enter import file path: ").strip()
+                ReportService.import_from_file(filename)
+                print("✅ Data imported successfully")
+
+            elif choice == "4":
+                confirm = input("⚠️ This will delete ALL data. Continue? (y/n): ").strip().lower()
+                if confirm == "y":
+                    ReportService.reset_application()
+                    print("✅ Application reset completed")
+
+            else:
+                print("❌ Invalid option")
+
+        except Exception as e:
+            print(f"❌ Settings error: {e}")
     
     def exit_application(self):
         """
@@ -607,7 +700,24 @@ class BudgetTracker:
         # 4. Retry on validation error
         # 5. Handle empty input based on required flag
         
-        pass  # Remove when implemented
+        while True:
+            user_input = input(prompt).strip()
+
+            if not user_input and required:
+                print("❌ This field is required.")
+                continue
+
+            if not user_input and not required:
+                return None
+
+            if validator:
+                try:
+                    return validator(user_input)
+                except Exception as e:
+                    print(f"❌ Invalid input: {e}")
+                    continue
+
+            return user_input  
     
     def display_transactions_table(self, transactions, page_size=10):
         """
@@ -621,7 +731,23 @@ class BudgetTracker:
         # Use utils.formatters for proper formatting
         # Include pagination for large lists
         
-        pass  # Remove when implemented
+        if not transactions:
+            print("No transactions found.")
+            return
+
+        total = len(transactions)
+
+        for i in range(0, total, page_size):
+            chunk = transactions[i:i + page_size]
+
+            print("\nID | Type | Amount | Category | Date | Description")
+            print("-" * 60)
+
+            for t in chunk:
+                print(f"{t.id} | {t.type} | {format_currency(t.amount)} | {t.category_id} | {format_date(t.transaction_date)} | {t.description}")
+
+            if i + page_size < total:
+                input("\nPress Enter to continue...")
 
 def check_environment():
     """
@@ -641,6 +767,17 @@ def check_environment():
         print("💡 Copy .env.example to .env and configure your database settings")
         return False
     
+    required_vars = ["DB_NAME", "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT"]
+
+    missing = []
+    for var in required_vars:
+        if not os.getenv(var):
+            missing.append(var)
+
+    if missing:
+        print(f"❌ Missing environment variables: {', '.join(missing)}")
+        return False
+
     return True
 
 def main():
