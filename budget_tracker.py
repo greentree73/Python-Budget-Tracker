@@ -637,8 +637,7 @@ class BudgetTracker:
         print("1. View Database Info")
         print("2. Export All Data")
         print("3. Import Data")
-        print("4. Reset Application")
-
+        
         choice = input("Select option: ").strip()
         
         # TODO: Implement settings management
@@ -660,12 +659,6 @@ class BudgetTracker:
                 filename = input("Enter import file path: ").strip()
                 ReportService.import_from_file(filename)
                 print("✅ Data imported successfully")
-
-            elif choice == "4":
-                confirm = input("⚠️ This will delete ALL data. Continue? (y/n): ").strip().lower()
-                if confirm == "y":
-                    ReportService.reset_application()
-                    print("✅ Application reset completed")
 
             else:
                 print("❌ Invalid option")

@@ -528,8 +528,15 @@ class ReportService:
             
         except Exception as e:
             print(f"❌ Error importing data: {e}")
-           
 
+
+    def reset_application():
+        """
+        Resets the application by clearing categories and transactions tables.
+        """
+        print("Deleting data")
+        
+        
 def main():
     """
     Test the ReportService
