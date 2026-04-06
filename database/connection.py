@@ -61,7 +61,7 @@ class DatabaseConnection:
                 port=self.port,
                 row_factory=dict_row
             )
-            print("�� Database connection established successfully")
+            #print("�� Database connection established successfully")
             return True
         except Exception as e:
             print(f"�� Database connection failed: {e}")

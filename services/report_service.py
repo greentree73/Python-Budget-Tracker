@@ -506,10 +506,13 @@ class ReportService:
             if "transactions" in data:
                 for transaction_data in data["transactions"]:
                     # Assuming `Transaction` class has a method to create a new transaction
+                    transaction_date = datetime.strptime(
+                    transaction_data["transaction_date"], "%Y-%m-%d"
+                    ).date()
                     transaction = Transaction(
                         amount=transaction_data["amount"],
                         description=transaction_data["description"],
-                        transaction_date=transaction_data["transaction_date"],
+                        transaction_date=transaction_date,
                         category_id=transaction_data["category_id"],
                         transaction_type=transaction_data["type"]
                     )

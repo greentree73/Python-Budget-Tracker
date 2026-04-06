@@ -788,15 +788,7 @@ def main():
     """
     try:
         # Check environment setup
-        if not check_environment():
-            print("\n⚠️  Please set up your environment before running the application.")
-            print("\n📌 Setup steps:")
-            print("   1. Copy .env.example to .env")
-            print("   2. Configure database settings in .env")
-            print("   3. Run schema.sql to create database tables")
-            print("   4. Run seed_data.sql to add sample data (optional)")
-            return
-        
+                
         # Create and start the application
 
         app = BudgetTracker()        
