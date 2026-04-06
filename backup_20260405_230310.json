@@ -1,0 +1,111 @@
+{
+    "categories": [
+        {
+            "id": 9,
+            "name": "Education",
+            "type": "expense",
+            "description": "Books, courses, training"
+        },
+        {
+            "id": 7,
+            "name": "Entertainment",
+            "type": "expense",
+            "description": "Movies, games, hobbies"
+        },
+        {
+            "id": 4,
+            "name": "Food & Beverages",
+            "type": "expense",
+            "description": "Groceries and dining out"
+        },
+        {
+            "id": 8,
+            "name": "Healthcare",
+            "type": "expense",
+            "description": "Medical bills and insurance"
+        },
+        {
+            "id": 13,
+            "name": "House Maintenance",
+            "type": "expense",
+            "description": "Test"
+        },
+        {
+            "id": 11,
+            "name": "Insurance",
+            "type": "expense",
+            "description": "personal"
+        },
+        {
+            "id": 18,
+            "name": "Luxury items",
+            "type": "expense",
+            "description": "expensive bags, watches, and cars"
+        },
+        {
+            "id": 15,
+            "name": "Personal Items",
+            "type": "expense",
+            "description": "test"
+        },
+        {
+            "id": 17,
+            "name": "phone service",
+            "type": "expense",
+            "description": "mobile service"
+        },
+        {
+            "id": 10,
+            "name": "Shopping",
+            "type": "expense",
+            "description": "Clothing, electronics, miscellaneous"
+        },
+        {
+            "id": 5,
+            "name": "Transportation",
+            "type": "expense",
+            "description": "Gas, public transport, car maintenance"
+        },
+        {
+            "id": 6,
+            "name": "Utilities",
+            "type": "expense",
+            "description": "Electricity, water, internet, phone"
+        },
+        {
+            "id": 12,
+            "name": "Banking",
+            "type": "income",
+            "description": "Savings"
+        },
+        {
+            "id": 2,
+            "name": "Freelance",
+            "type": "income",
+            "description": "Freelance work and consulting"
+        },
+        {
+            "id": 3,
+            "name": "Investment",
+            "type": "income",
+            "description": "Investment returns and dividends"
+        },
+        {
+            "id": 1,
+            "name": "Personal Banking",
+            "type": "income",
+            "description": "Fairwinds"
+        },
+        {
+            "id": 19,
+            "name": "Work Travel",
+            "type": "income",
+            "description": "Will be reimbursed"
+        }
+    ],
+    "transactions": [
+        {
+            "id": 12,
+            "amount": 3500.0,
+            "description": "test1",
+            "transaction_date": 

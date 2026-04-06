@@ -13,6 +13,20 @@ from models.category import Category
 from services.transaction_service import TransactionService
 from utils.formatters import format_currency, format_date
 from collections import defaultdict
+import json
+import os
+
+# Custom encoder for Decimal types
+class CustomEncoder(json.JSONEncoder):
+    """
+    Custom encoder to handle Decimal and date types.
+    """
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)  # Convert Decimal to float
+        elif isinstance(obj, date):
+            return obj.isoformat()  # Convert date to ISO 8601 string
+        return super().default(obj)  # Let the base class handle other types
 
 
 class ReportService:
@@ -202,11 +216,11 @@ class ReportService:
         if not transactions:
             report.append("No transactions found.")
         else:
-            total_spending = sum(t.amount for t in transactions if t.type == 'expense')
-            total_income = sum(t.amount for t in transactions if t.type == 'income')
+            total_spending = sum((t.amount for t in transactions if t.type == 'expense'), Decimal('0'))
+            total_income = sum((t.amount for t in transactions if t.type == 'income'), Decimal('0'))
 
-            daily_spending = defaultdict(float)
-            daily_avg_spending = total_spending / days if days else 0
+            daily_spending = defaultdict(Decimal)
+            daily_avg_spending = total_spending / Decimal(days) if days else Decimal('0')
 
             report.append(f"Total Income: {format_currency(total_income)}")
             report.append(f"Total Expenses: {format_currency(total_spending)}")
@@ -419,6 +433,99 @@ class ReportService:
         except Exception as e:
             print(f"❌ Error exporting report: {e}")
             return False
+        
+            
+    @staticmethod
+    def export_all_data():
+        """
+        Collects all data to be exported (transactions, categories, etc.).
+        
+        Returns:
+            dict: Data to be exported (e.g., categories, transactions)
+        """
+        # Example: You may collect data from different services or databases
+        # For example, categories and transactions might be collected like this:
+
+        categories = Category.get_all()  # Assuming this returns a list of category objects
+        transactions = Transaction.get_all()  # Assuming this returns a list of transaction objects
+
+        # Now, let's structure the data we want to export:
+        data = {
+            "categories": [category.__dict__ for category in categories],  # Convert objects to dicts
+            "transactions": [transaction.__dict__ for transaction in transactions]
+            }
+        
+        return data
+        
+    @staticmethod
+    def export_to_file(data, filename):
+        """
+        Exports the provided data to a JSON file.
+        
+        Args:
+            data (dict): The data to be exported.
+            filename (str): The file path where data will be saved.
+        """
+               
+        try:
+            with open(filename, 'w') as file:
+                json.dump(data, file, cls=CustomEncoder, indent=4)
+            print(f"✅ Data successfully saved to {filename}")
+        except Exception as e:
+            print(f"❌ Error exporting data: {e}")    
+
+
+    @staticmethod
+    def import_from_file(filename):
+        """
+        Imports data from the provided JSON file and stores it in the database.
+        
+        Args:
+            filename (str): The file path from which data will be imported.
+        """
+        if not os.path.exists(filename):
+            print(f"❌ File {filename} not found.")
+            return
+        
+        try:
+            # Read the data from the file
+            with open(filename, 'r') as file:
+                data = json.load(file)
+            
+            # Now you need to process the data to insert it into your tables.
+            if "categories" in data:
+                for category_data in data["categories"]:
+                    # Assuming `Category` class has a method to create a new category
+                    category = Category(
+                        name=category_data["name"],
+                        category_type=category_data["type"],
+                        description=category_data["description"]
+                    )
+                    category.save()  # Assuming save() inserts the category into the database
+
+            if "transactions" in data:
+                for transaction_data in data["transactions"]:
+                    # Assuming `Transaction` class has a method to create a new transaction
+                    transaction = Transaction(
+                        amount=transaction_data["amount"],
+                        description=transaction_data["description"],
+                        transaction_date=transaction_data["transaction_date"],
+                        category_id=transaction_data["category_id"],
+                        transaction_type=transaction_data["type"]
+                    )
+                    transaction.save()  # Assuming save() inserts the transaction into the database
+
+            print(f"✅ Data imported successfully from {filename}")
+
+        except FileNotFoundError:
+            print(f"❌ File {filename} not found.")
+            
+        except json.JSONDecodeError:
+            print(f"❌ Error decoding JSON from {filename}. Please check the file format.")
+            
+        except Exception as e:
+            print(f"❌ Error importing data: {e}")
+           
 
 def main():
     """

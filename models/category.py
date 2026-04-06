@@ -12,8 +12,8 @@ class Category:
     """
     Represents a transaction category (e.g., Food, Transportation)
     """
-    
-    def __init__(self, name=None, category_type=None, description=None, category_id=None):
+    _db = DatabaseConnection()
+    def __init__(self, name, category_type=None, description=None, category_id=None):
         """
         Initialize a category
         
@@ -27,7 +27,7 @@ class Category:
         self.name = name
         self.type = category_type
         self.description = description
-        self.db = DatabaseConnection()
+        #self.db = DatabaseConnection()
     
     def save(self):
         """
@@ -39,7 +39,7 @@ class Category:
         if not self.validate():
             return False
             
-        self.db.connect()
+        #self.db.connect()
         
         try:
             if self.id:
@@ -48,12 +48,15 @@ class Category:
                 UPDATE categories SET name = %s, type = %s, description = %s WHERE id = %s
                 """
                 # Use self.db.execute_update() with parameters
-                self.db.execute_update(query, (
-                self.name,
-                self.type,
-                self.description,
-                self.id
-            ))
+                success = Category._db.execute_update(query, (
+                    self.name,
+                    self.type,
+                    self.description,
+                    self.id
+                ))
+                if not success:
+                    print("❌ Update failed")
+                    return False
             else:
                 # TODO: INSERT new category
                 query = """
@@ -61,23 +64,25 @@ class Category:
                 """
                 # Use self.db.execute_query() to get the new ID
                 
-                result = self.db.execute_query(query, (
+                result = Category._db.execute_query(query, (
                 self.name,
                 self.type,
                 self.description
-            ))
+                ))
 
-            if result:
-                self.id = result[0][0]
-                
+                if result and len(result) > 0:
+                    self.id = result[0]["id"]  
+                    
+                else:
+                    print("❌ Failed to retrieve inserted ID")
+                    return False  
+              
         except Exception as e:
             print(f"❌ Error saving category: {e}")
             return False
-        finally:
-            self.db.disconnect()
-        
-        return True
-    
+       
+        return True       
+            
     def validate(self):
         """
         Validate category data
@@ -113,16 +118,15 @@ class Category:
         Returns:
             list: List of Category objects
         """
-        db = DatabaseConnection()
-        db.connect()
+        #db = DatabaseConnection()
+        #db.connect()
         
         # TODO: Write SQL query to get all categories
         query = """
         SELECT id, name, type, description FROM categories ORDER BY type, name
         """
-        results = db.execute_query(query)
-        db.disconnect()
-        
+        results = Category._db.execute_query(query)
+               
         categories = []
         # TODO: Convert results to Category objects
         # Loop through results and create Category instances
@@ -151,18 +155,16 @@ class Category:
             list: List of Category objects
         """
 
-        db = DatabaseConnection()
-        db.connect()
-
+        #db = DatabaseConnection()
+        
         # TODO: Implement type filtering
         # Similar to get_all() but with WHERE type = %s
         
         query = """
         SELECT id, name, type, description FROM categories WHERE type = %s ORDER BY name
         """
-        results = db.execute_query(query, (category_type,))
-        db.disconnect()
-        
+        results = Category._db.execute_query(query, (category_type,))
+                
         categories = []
        
         # TODO: Convert results to Category objects
@@ -190,8 +192,8 @@ class Category:
         Returns:
             Category: Category object or None if not found
         """
-        db = DatabaseConnection()
-        db.connect()
+        #db = DatabaseConnection()
+        #db.connect()
 
         # TODO: Implement get_by_id
         query = """
@@ -199,9 +201,8 @@ class Category:
         FROM categories
         WHERE id = %s
         """
-        result = db.execute_query(query, (category_id,))
-        db.disconnect()
-
+        result = Category._db.execute_query(query, (category_id,))
+        
         if result:
             row = result[0]
             return Category(
@@ -224,16 +225,14 @@ class Category:
         if not self.id:
             return 0
             
-        self.db.connect()
+        #self.db.connect()
         
         # TODO: Count transactions in this category
         query = """
         SELECT COUNT(*) as count FROM transactions WHERE category_id = %s
         """
-        result = self.db.execute_query(query, (self.id,))
-
-        self.db.disconnect()
-        
+        result = Category._db.execute_query(query, (self.id,))
+                
         return result[0]['count'] if result else 0
     
     def delete(self):
@@ -257,7 +256,7 @@ class Category:
             if response.lower() != 'y':
                 print("❌ Delete cancelled")
                 return False
-        
+                    
         # TODO: Implement delete
         # DELETE FROM categories WHERE id = %s
         try:
@@ -265,15 +264,12 @@ class Category:
             DELETE FROM categories
             WHERE id = %s
             """
-            self.db.execute_update(query, (self.id,))
+            Category._db.execute_update(query, (self.id,))
 
         except Exception as e:
             print(f"❌ Error deleting category: {e}")
             return False
         
-        finally:
-            self.db.disconnect()
-
         return True
 
     def __str__(self):

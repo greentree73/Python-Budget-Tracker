@@ -33,8 +33,10 @@ class DatabaseConnection:
         self.password = os.getenv("DB_PASSWORD", "root")  # TODO: Get from environment
         self.port = int(os.getenv("DB_PORT", 5432))  # TODO: Get from environment (default: 5432)
         
-        self.connection = None
-        self.connect()  # ✅ establish connection here
+        self.connected = False
+
+        if self.connected == False:
+            self.connect()  # ✅ establish connection here
     
     def connect(self):
         """
@@ -43,6 +45,10 @@ class DatabaseConnection:
         Returns:
             bool: True if connection successful, False otherwise
         """
+
+        if self.connected:
+            return True  
+        
         try:
             # TODO: Create database connection using psycopg.connect()
             # Use the connection parameters from __init__
@@ -70,6 +76,7 @@ class DatabaseConnection:
         # Check if self.connection exists and close it
         if self.connection:
             self.connection.close()
+            self.connected = False
             print("�� Database connection closed successfully")
     
     def execute_query(self, query, params=None):
@@ -176,6 +183,16 @@ class DatabaseConnection:
             print("❌ Could not connect to database")
             print("💡 Make sure PostgreSQL is running and .env file is configured")
             return False
+        
+    def get_connection_info(self):
+        """
+        Returns basic connection info for debugging purposes.
+        """
+        if self.connection:
+            return f"Connected to {self.database} at {self.host}:{self.port} as {self.user}"
+        else:
+            return "Not connected to the database"
+
 
 def main():
     """
@@ -185,6 +202,7 @@ def main():
     print("=" * 50)
     
     db = DatabaseConnection()
+    
     db.test_connection()
     
     print("\n💡 Next steps:")

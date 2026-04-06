@@ -538,7 +538,7 @@ class BudgetTracker:
                 name = input("Category name: ").strip()
                 type_ = input("Type (income/expense): ").strip().lower()
                 description = input("Description: ").strip()
-                category = Category(name=name, type=type_, description=description)
+                category = Category(name=name, category_type=type_, description=description)
                 if category.save():
                     print("✅ Category added successfully")
 
@@ -680,6 +680,8 @@ class BudgetTracker:
         print("\n👋 Thank you for using Budget Tracker!")
         print("Your financial data has been saved.")
         self.running = False
+        self.db.disconnect()
+
     
     def get_user_input(self, prompt, validator=None, required=True):
         """

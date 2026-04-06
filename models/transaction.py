@@ -18,7 +18,7 @@ class Transaction:
     _db = DatabaseConnection()
     
     def __init__(self, amount=None, description=None, transaction_date=None, 
-                 category_id=None, transaction_type=None, transaction_id=None):
+                 category_id=None, transaction_type=None, transaction_id=None, category=None):
         """
         Initialize a transaction
         
@@ -36,6 +36,7 @@ class Transaction:
         self.transaction_date = transaction_date
         self.category_id = category_id
         self.type = transaction_type
+        self.category = category
             
     def save(self):
         """
@@ -211,7 +212,8 @@ class Transaction:
                     transaction_date=row["transaction_date"],
                     category_id=row["category_id"],  # ✅ now exists
                     transaction_type=row["type"],
-                    transaction_id=row["id"]
+                    transaction_id=row["id"],
+                    category=row["category_name"]
                 )
             )
 

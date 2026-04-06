@@ -267,8 +267,14 @@ class TransactionService:
         search_term = search_term.lower()
 
         return [
-            t for t in transactions
-            if search_term in (t.description or "").lower()
+              t for t in transactions
+            if search_term.lower() in (
+                (t.description or "").lower() +
+                " " +
+                (t.category or "").lower() +
+                " " +
+                (t.type or "").lower()   
+            )
         ]
 
     
